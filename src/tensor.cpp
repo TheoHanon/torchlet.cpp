@@ -96,6 +96,7 @@ Tensor Tensor::permute(const size_t& idx1, const size_t& idx2){
 };
 
 
+//TODO
 Tensor Tensor::view(const std::vector<size_t>& new_shape) {
 
     validate_shape(shape_, new_shape);
