@@ -6,15 +6,10 @@
 #include <cstdlib>
 #include <utility>
 
-using std::size_t;
+#include "dtype.h"
+#include "helpers.h"
 
-enum class Dtype {
-    Float32,
-    Float64, 
-    Int32, 
-    Int64, 
-    UInt8,
-};
+using std::size_t;
 
 struct Storage {
     void* data = nullptr;
@@ -34,23 +29,20 @@ class Tensor {
         Tensor permute(const size_t& idx1, const size_t& idx2);
         Tensor view(const std::vector<size_t>& new_shape);
 
-        
-        void* data_ptr() const {return storage_->data;};
-        const std::shared_ptr<Storage>& storage_ptr() const {return storage_;};
-        const std::vector<size_t>& shape() const {return this->shape_;};
+        void* data_ptr() const {return m_storage->data;};
+        std::shared_ptr<Storage> storage_ptr() const {return m_storage;};
+        const std::vector<size_t>& shape() const {return m_shape;};
+        size_t byte_offset() const {return m_byte_offset;};
 
 
     private:
-        Dtype dtype_;
-        std::vector<size_t> shape_;
-        std::vector<size_t> strides_;
-        size_t itemsize_;
-        std::shared_ptr<Storage> storage_;
+        Dtype m_dtype; 
+        std::vector<size_t> m_shape;
+        std::vector<size_t> m_strides;
+        size_t m_byte_offset;
+        std::shared_ptr<Storage> m_storage;
 
-        Tensor(const std::vector<size_t>& shape, const std::vector<size_t>& strides, const Dtype& dtype, const std::shared_ptr<Storage>& storage);
-
-        void get_itemsize();
-        void get_strides();
+        Tensor(const std::vector<size_t>& shape, const std::vector<size_t>& strides, const size_t& byte_offset, const Dtype& dtype, const std::shared_ptr<Storage>& storage);
 };
 
 
