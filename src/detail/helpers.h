@@ -1,8 +1,9 @@
-#ifndef TENSOR_HELPERS_H
-#define TENSOR_HELPERS_H
-
+#pragma once
 #include <torchcpp/dtype.h>
 #include <vector>
+#include <iostream>
+
+namespace torchcpp::detail {
 
 inline constexpr std::size_t dtype_size(Dtype dtype) noexcept {
     switch (dtype) {
@@ -15,27 +16,45 @@ inline constexpr std::size_t dtype_size(Dtype dtype) noexcept {
     return 0;
 };
 
-inline std::vector<std::size_t> get_strides(std::vector<std::size_t> shape) noexcept {
+inline size_t get_offset(const std::initializer_list<size_t>& index, const std::vector<size_t>& shape, const std::vector<size_t>& strides, const size_t& curr_offset) {
+
+    size_t offset = curr_offset;
+    size_t k = 0;
+
+    for (auto &id : index)
+    {
+        if (id >= shape[k])
+            throw std::runtime_error("Index out of range.");
+
+        offset += strides[k++] * id;
+    }
+
+    return offset;
+
+}
+
+inline std::vector<std::size_t> get_strides(const std::vector<std::size_t>& shape) noexcept {
     std::vector<std::size_t> strides(shape.size());
     std::size_t stride = 1;
 
-    for (std::size_t i = shape.size(); i > 0 ; --i){
-        strides[i] = stride;
-        stride *= shape[i];
+    size_t idx = shape.size();
+
+    for (auto it = shape.rbegin(); it != shape.rend(); ++it){
+        strides[--idx] = stride;
+        stride *= *it;
     }
 
     return strides;
 };
 
-inline constexpr std::size_t numel(const std::vector<std::size_t>& shape) noexcept {
+inline std::size_t numel(const std::vector<std::size_t>& shape) noexcept {
     std::size_t numel = 1;
     for (const auto& s: shape) numel *= s;
     return numel;
 };
 
-inline constexpr std::size_t nbytes(const std::vector<std::size_t>& shape, Dtype dtype) {
+inline std::size_t nbytes(const std::vector<std::size_t>& shape, Dtype dtype) {
     return dtype_size(dtype) * numel(shape);
 };
 
-
-#endif //TENSOR_HELPERS
+}
