@@ -1,7 +1,7 @@
 #ifndef TENSOR_HELPERS_H
 #define TENSOR_HELPERS_H
 
-#include "dtype.h"
+#include <torchcpp/dtype.h>
 #include <vector>
 
 inline constexpr std::size_t dtype_size(Dtype dtype) noexcept {

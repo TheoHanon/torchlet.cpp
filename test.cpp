@@ -2,7 +2,8 @@
 #include <cstddef> 
 #include <bitset>
 #include <vector>
-#include "src/tensor.h"
+
+#include <torchcpp/torchcpp.h>
 
 
 using namespace std;

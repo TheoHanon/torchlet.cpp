@@ -1,4 +1,5 @@
-#include "tensor.h"
+#include <torchcpp/torchcpp.h>
+#include "detail/helpers.h"
 
 
 void validate_shape(std::vector<size_t> old_shape, std::vector<size_t> new_shape){

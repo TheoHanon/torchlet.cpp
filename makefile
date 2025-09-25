@@ -1,6 +1,6 @@
 .PHONY : clean
 CXX = clang++
-CXXFLAGS = -std=c++17 -Wall
+CXXFLAGS = -std=c++17 -Wall -Iinclude
 
 main : test.o tensor.o
 	$(CXX) $(CXXFLAGS) test.o tensor.o -o test
