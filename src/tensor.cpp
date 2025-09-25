@@ -1,4 +1,4 @@
-#include <torchcpp/torchcpp.h>
+#include <torchlet/torchlet.h>
 
 #include "detail/helpers.h"
 #include "detail/validators.h"
@@ -6,8 +6,8 @@
 Tensor::Tensor(const std::vector<size_t> &shape, const Dtype &dtype) : m_dtype(dtype), m_shape(shape), m_elem_offset(0)
 {
 
-    m_strides = torchcpp::detail::get_strides(shape);
-    size_t n_bytes = torchcpp::detail::nbytes(shape, dtype);
+    m_strides = torchlet::detail::get_strides(shape);
+    size_t n_bytes = torchlet::detail::nbytes(shape, dtype);
 
     m_storage = std::make_shared<Storage>();
     m_storage->data = std::malloc(n_bytes);
@@ -25,7 +25,7 @@ Tensor Tensor::index(const std::initializer_list<size_t> &index)
         throw std::runtime_error("Wrong indices size.");
     }
 
-    size_t new_elem_offset = torchcpp::detail::get_offset(index, m_shape, m_strides, m_elem_offset);
+    size_t new_elem_offset = torchlet::detail::get_offset(index, m_shape, m_strides, m_elem_offset);
     
     std::vector<size_t> new_shape{1};
     std::vector<size_t> new_strides{1};
@@ -40,7 +40,7 @@ void Tensor::assign_(const std::initializer_list<size_t>& index, T val) {
         throw std::runtime_error("Type T does not match the type of dtype.");
     }
 
-    size_t elem_offset = torchcpp::detail::get_offset(index, m_shape, m_strides, m_elem_offset);
+    size_t elem_offset = torchlet::detail::get_offset(index, m_shape, m_strides, m_elem_offset);
     T* data_ptr = static_cast<T*> (m_storage -> data);
     data_ptr[elem_offset] = val;
 
@@ -88,10 +88,10 @@ Tensor Tensor::permute(const size_t &idx1, const size_t &idx2)
 Tensor Tensor::view(const std::vector<size_t> &new_shape)
 {
 
-    torchcpp::detail::validate_shape(m_shape, new_shape);
-    torchcpp::detail::validate_strides(m_strides);
+    torchlet::detail::validate_shape(m_shape, new_shape);
+    torchlet::detail::validate_strides(m_strides);
 
-    std::vector<size_t> new_strides = torchcpp::detail::get_strides(new_shape);
+    std::vector<size_t> new_strides = torchlet::detail::get_strides(new_shape);
 
     return Tensor(new_shape, new_strides, m_elem_offset, m_dtype, m_storage);
 };

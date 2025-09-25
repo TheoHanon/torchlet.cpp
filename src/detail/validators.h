@@ -2,7 +2,7 @@
 #include <vector>
 #include <stdexcept>
 
-namespace torchcpp::detail {
+namespace torchlet::detail {
 
 void validate_shape(std::vector<size_t> old_shape, std::vector<size_t> new_shape){
 

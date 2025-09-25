@@ -4,7 +4,7 @@
 #include <vector>
 #include <random>
 
-#include <torchcpp/torchcpp.h>
+#include <torchlet/torchlet.h>
 
 
 using namespace std;

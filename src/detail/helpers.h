@@ -1,9 +1,9 @@
 #pragma once
-#include <torchcpp/dtype.h>
+#include <torchlet/dtype.h>
 #include <vector>
 #include <iostream>
 
-namespace torchcpp::detail {
+namespace torchlet::detail {
 
 inline constexpr std::size_t dtype_size(Dtype dtype) noexcept {
     switch (dtype) {
