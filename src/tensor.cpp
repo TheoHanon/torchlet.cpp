@@ -1,4 +1,4 @@
-#include <torchlet/torchlet.h>
+#include <torchlet/tensor.h>
 
 #include "detail/helpers.h"
 #include "detail/validators.h"
@@ -7,6 +7,7 @@ Tensor::Tensor(const std::vector<size_t> &shape, const Dtype &dtype) : m_dtype(d
 {
 
     m_strides = torchlet::detail::get_strides(shape);
+    m_numel = torchlet::detail::numel(shape);
     size_t n_bytes = torchlet::detail::nbytes(shape, dtype);
 
     m_storage = std::make_shared<Storage>();
@@ -14,10 +15,30 @@ Tensor::Tensor(const std::vector<size_t> &shape, const Dtype &dtype) : m_dtype(d
 
 };
 
-Tensor::Tensor(const std::vector<size_t> &shape, const std::vector<size_t> &strides, const size_t &elem_offset, const Dtype &dtype, const std::shared_ptr<Storage> &storage)
-    : m_dtype(dtype), m_shape(shape), m_strides(strides), m_elem_offset(elem_offset), m_storage(storage) {};
+Tensor::Tensor(const std::vector<size_t> &shape, const std::vector<size_t> &strides, const size_t &elem_offset, const Dtype &dtype, const std::shared_ptr<Storage> &storage, const bool& contiguous = true)
+    : m_dtype(dtype), m_shape(shape), m_strides(strides), m_elem_offset(elem_offset), m_storage(storage), m_contiguous(contiguous) {
+        m_numel = torchlet::detail::numel(shape);
+    };
 
-Tensor Tensor::index(const std::initializer_list<size_t> &index)
+
+Tensor Tensor::zeros(const std::initializer_list<size_t>& shape, const Dtype& dtype) {
+
+    Tensor t = Tensor(shape, dtype);
+    void* data_ptr = t.data_ptr<void>();
+    memset(data_ptr, 0, t.numel());
+
+    return t;
+}
+Tensor Tensor::zeros(const std::vector<size_t>& shape, const Dtype& dtype) {
+
+    Tensor t = Tensor(shape, dtype);
+    void* data_ptr = t.data_ptr<void>();
+    memset(data_ptr, 0, t.numel());
+
+    return t;
+}
+
+Tensor Tensor::index(const std::initializer_list<size_t>& index)
 {
 
     if (index.size() != m_strides.size())
@@ -33,15 +54,62 @@ Tensor Tensor::index(const std::initializer_list<size_t> &index)
     return Tensor(new_shape, new_strides, new_elem_offset, m_dtype, m_storage);
 };
 
+
+Tensor Tensor::index(const std::initializer_list<torchlet::index::Slice>& index) {
+
+    if (index.size() != m_strides.size())
+    {
+        throw std::runtime_error("Wrong indices size.");
+    }
+
+    std::vector<size_t> new_shape(m_shape.size());
+    size_t new_elem_offset = m_elem_offset;
+    size_t k = 0;
+    for (const auto& idx : index){
+        new_shape[k++] = idx.range();
+        new_elem_offset += idx.start;
+    }
+
+    std::vector<size_t> new_strides(m_strides);
+    return Tensor(new_shape, new_strides, new_elem_offset, m_dtype, m_storage, false);
+
+};
+
+
+template <typename T>
+void Tensor::fill_(T val){
+
+    if (!m_contiguous) throw std::runtime_error("The memory layout must be contiguous.");
+
+    if (CPPTypeToDType<T>::dtype != m_dtype) {
+        throw std::runtime_error("Type T does not match the type of dtype.");
+    }
+
+    size_t elem_offset = torchlet::detail::get_offset({static_cast<size_t>(0)}, m_shape, m_strides, m_elem_offset);
+    size_t numel = torchlet::detail::numel(m_shape);
+
+    T* data_ptr = reinterpret_cast<T*> (m_storage -> data);
+    std::fill(data_ptr + elem_offset, data_ptr + elem_offset + numel, val);
+};
+
+
+template void Tensor::fill_(float val);
+template void Tensor::fill_(double val);
+template void Tensor::fill_(int32_t val);
+template void Tensor::fill_(int64_t val);
+template void Tensor::fill_(uint8_t val);
+
+
+
 template <typename T>
 void Tensor::assign_(const std::initializer_list<size_t>& index, T val) {
 
-    if (DTypeToCPPType<T>::dtype != m_dtype) {
+    if (CPPTypeToDType<T>::dtype != m_dtype) {
         throw std::runtime_error("Type T does not match the type of dtype.");
     }
 
     size_t elem_offset = torchlet::detail::get_offset(index, m_shape, m_strides, m_elem_offset);
-    T* data_ptr = static_cast<T*> (m_storage -> data);
+    T* data_ptr = reinterpret_cast<T*> (m_storage -> data);
     data_ptr[elem_offset] = val;
 
 };
@@ -54,19 +122,6 @@ template void Tensor::assign_(const std::initializer_list<size_t>& index, uint8_
 
 
 
-//TODO
-template <typename T>
-void Tensor::normal_(T mean, T std){
-
-    if (DTypeToCPPType<T>::dtype != m_dtype) {
-        throw std::runtime_error("Type T does not match the type of dtype.");
-    }
-
-    return;
-};
-
-template void Tensor::normal_(float, float  );
-template void Tensor::normal_(double, double);
 
 Tensor Tensor::permute(const size_t &idx1, const size_t &idx2)
 {
@@ -82,14 +137,14 @@ Tensor Tensor::permute(const size_t &idx1, const size_t &idx2)
     std::swap(new_shape[idx1], new_shape[idx2]);
     std::swap(new_strides[idx1], new_strides[idx2]);
 
-    return Tensor(new_shape, new_strides, m_elem_offset, m_dtype, m_storage);
+    return Tensor(new_shape, new_strides, m_elem_offset, m_dtype, m_storage, false);
 };
 
 Tensor Tensor::view(const std::vector<size_t> &new_shape)
 {
 
+    if (!m_contiguous) throw std::runtime_error("Memory is not contiguous.");
     torchlet::detail::validate_shape(m_shape, new_shape);
-    torchlet::detail::validate_strides(m_strides);
 
     std::vector<size_t> new_strides = torchlet::detail::get_strides(new_shape);
 

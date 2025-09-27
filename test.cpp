@@ -8,17 +8,27 @@
 
 
 using namespace std;
+using namespace torchlet::index;
 
 template <typename T>
 void rprint(Tensor& tensor, size_t dim, size_t& index){
 
     std::vector<size_t> shape = tensor.shape();
-    T* data_ptr = tensor.data_ptr<T>();
+    T* data_ptr = tensor.data_ptr<T>() + tensor.elem_offset();
   
     if (dim == shape.size() -1) {
         std::cout << "[ ";
+        vector<size_t> strides = tensor.strides();
+
         for (size_t idx = 0; idx < shape[dim]; idx ++) {
-            std::cout << *(data_ptr + index);
+            size_t tmp = index;
+            size_t offset = 0;
+            for (size_t dim = shape.size(); dim -- > 0;){
+                size_t coord = tmp % shape[dim];
+                tmp /= shape[dim];
+                offset += coord * strides[dim];
+            }
+            std::cout << *(data_ptr + offset);
             if (idx != shape[dim] - 1) std::cout << ", ";
             index++;
         }
@@ -36,10 +46,8 @@ void rprint(Tensor& tensor, size_t dim, size_t& index){
 
 template <typename T> 
 void print(Tensor& tensor) {
-
-    size_t index = tensor.byte_offset();
-    size_t dim = 0;
-    rprint<T>(tensor, dim, index);
+    size_t index = 0;
+    rprint<T>(tensor, 0, index);
     std::cout << std::endl;
 };
 
@@ -48,14 +56,13 @@ template <typename T>
 void print_raw(Tensor& tensor) {
     
     size_t len = 1;
-    size_t offset = tensor.byte_offset();
     std::vector<size_t> shape = tensor.shape();
-    T* data_ptr = tensor.data_ptr<T>();
+    T* data_ptr = tensor.data_ptr<T>() + tensor.elem_offset();
 
     for (const auto& sh : shape) len *= sh;
     std::cout << "[";
     for (size_t k = 0; k < len; k++) {
-        std::cout << *(data_ptr + k + offset) << " ";
+        std::cout << *(data_ptr + k) << " ";
     }
 
     std::cout << "]" << std::endl;
@@ -63,31 +70,38 @@ void print_raw(Tensor& tensor) {
 
 int main(){
 
-    Generator gen = Generator();
-    std::normal_distribution<double> dist{0.0, 1.0};
+    size_t in_features = 10;
+    size_t out_features = 5;
+
+    Linear linear(in_features, out_features, false, Dtype::Float32);
+    linear.normal_(0.0f, 1.0f);
+
+    Tensor x = Tensor::zeros({5, 10}, Dtype::Float32);
 
 
-    std::cout << "Random number :" << dist(gen.engine()) << std::endl; 
-    std::cout << "Random number :" << dist(gen.engine()) << std::endl; 
+    torchlet::init::uniform_(x, 0.0f, 1.0f);
+
+    Tensor out = linear.forward(x);
+
+    print<float>(out);
+
+
     
+    // vector<size_t> shape{2, 3, 5};
+    // Dtype dtype = Dtype::Float32;
 
-    vector<size_t> shape{2, 3, 5};
-    Dtype dtype = Dtype::Float32;
+    // Tensor t1 = Tensor(shape, dtype);
+    // Tensor t2 = t1.index({Slice(0, 2), Slice(0, 3), Slice(0, 5)});
 
-    Tensor t1 = Tensor(shape, dtype);
-    Tensor ttemp = t1.index({0, 1, 3});
-    Tensor t2 = t1.view({30});
-
-
-    t1.assign_({0, 1, 3}, 10.0f);
-    t1.assign_({0, 1, 2}, 10.0f);
-
-    print<float>(t1);
-    print<float>(t2);
-    print<float>(ttemp);
-    std::cout << "\n\n";
+    // print<float>(t1);
+    // print<float>(t2);
+        
+    // torchlet::init::normal_(t2, 0.f, 1.f);
     
+    // print<float>(t1);
+    // print<float>(t2);
     
+    // std::cout << "\n\n";
     
     return 0;
 

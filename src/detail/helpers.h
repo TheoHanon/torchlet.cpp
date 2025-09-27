@@ -5,6 +5,7 @@
 
 namespace torchlet::detail {
 
+
 inline constexpr std::size_t dtype_size(Dtype dtype) noexcept {
     switch (dtype) {
         case Dtype::Float32: return 4;

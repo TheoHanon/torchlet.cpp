@@ -4,7 +4,7 @@
 
 namespace torchlet::detail {
 
-void validate_shape(std::vector<size_t> old_shape, std::vector<size_t> new_shape){
+inline void validate_shape(std::vector<size_t> old_shape, std::vector<size_t> new_shape){
 
     size_t new_prod = 1; size_t old_prod = 1;
 
@@ -14,10 +14,10 @@ void validate_shape(std::vector<size_t> old_shape, std::vector<size_t> new_shape
     if (old_prod != new_prod) throw std::invalid_argument("Shapes doesn't match.");
 };
 
-void validate_strides(const std::vector<size_t>& strides) {
+inline void validate_contiguous(const std::vector<size_t>& shape, const std::vector<size_t>& strides) {
 
     for (size_t i = 1; i < strides.size(); i++) {
-        if (strides[i - 1] < strides[i]) throw std::runtime_error("Memory layout is not row major.");
+        if (strides[i] * shape[i] != strides[i-1]) throw std::runtime_error("Memory layout is not row major.");
     }
 };
 

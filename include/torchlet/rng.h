@@ -5,25 +5,28 @@
 class Generator {
 
     public:
-        void manual_seed(size_t s) {m_engine.seed(s); m_seed = s;};
 
-        Generator() {
-            std::random_device rd;
-            m_seed = rd();
-            m_engine = std::mt19937(m_seed);
-        }; 
-
-        Generator(size_t s) {
-            m_seed= s;
-            m_engine = std::mt19937(m_seed);
+        static Generator& global() noexcept {
+            static Generator g;
+            return g;
         };
+
+
+        void manual_seed(uint32_t s) {
+            m_seed = s;
+            m_engine.seed(s);
+        };
+
+        Generator() = default;
+        explicit Generator(uint32_t s) : m_seed(s), m_engine(s) {};
 
         std::mt19937&       engine()       noexcept { return m_engine; }  // for drawing
         const std::mt19937& engine() const noexcept { return m_engine; }  // read-only
+
     
     private:
-        std::mt19937 m_engine;
-        size_t m_seed;
+        uint32_t m_seed{static_cast<uint32_t>(std::random_device{}())};
+        std::mt19937 m_engine{m_seed};
 
         Generator(const Generator&) = delete;
         Generator(Generator&&) = delete;
