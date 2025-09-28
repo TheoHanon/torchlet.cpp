@@ -1,6 +1,6 @@
 #pragma once
 #include "dtype.h"
-#include "tensor.h"
-#include "init.h"
 #include "index.h"
+#include "init.h"
 #include "linear.h"
+#include "tensor.h"
