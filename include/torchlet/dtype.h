@@ -1,13 +1,7 @@
 #pragma once
 #include <cstdint>
 
-enum class Dtype {
-  Float32,
-  Float64,
-  Int32,
-  Int64,
-  UInt8,
-};
+enum class Dtype { Float32, Float64, Int32, Int64, UInt8, UInt32, UInt64 };
 
 template <typename T> struct CPPTypeToDType;
 
@@ -25,6 +19,12 @@ template <> struct CPPTypeToDType<std::int64_t> {
 };
 template <> struct CPPTypeToDType<std::uint8_t> {
   static constexpr Dtype dtype = Dtype::UInt8;
+};
+template <> struct CPPTypeToDType<std::uint32_t> {
+  static constexpr Dtype dtype = Dtype::UInt32;
+};
+template <> struct CPPTypeToDType<std::uint64_t> {
+  static constexpr Dtype dtype = Dtype::UInt64;
 };
 
 #define DISPATCH_FLOAT(dtype, NAME, BODY)                                      \
@@ -56,6 +56,14 @@ template <> struct CPPTypeToDType<std::uint8_t> {
   } break;                                                                     \
   case Dtype::Int64: {                                                         \
     using NAME = std::int64_t;                                                 \
+    BODY                                                                       \
+  } break;                                                                     \
+  case Dtype::UInt64: {                                                        \
+    using NAME = std::uint64_t;                                                \
+    BODY                                                                       \
+  } break;                                                                     \
+  case Dtype::UInt32: {                                                        \
+    using NAME = std::uint32_t;                                                \
     BODY                                                                       \
   } break;                                                                     \
   case Dtype::UInt8: {                                                         \
