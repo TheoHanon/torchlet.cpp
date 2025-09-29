@@ -17,7 +17,6 @@ void gemv_kernel(const T *W, const T *x, T *y, std::size_t m,
 /// @tparam T type
 /// @param x m-dim vector to add
 /// @param y m-dim vector modified in-place
-/// @param c m-dim containing the solution
 /// @param m vector size
 template <typename T>
 void vadd_kernel(const T *x, T *y, std::size_t m) noexcept;

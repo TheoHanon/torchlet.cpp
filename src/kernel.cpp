@@ -16,7 +16,6 @@ void gemv_kernel(const T *W, const T *x, T *y, std::size_t m,
 
 template <typename T>
 void vadd_kernel(const T *x, T *y, std::size_t m) noexcept {
-
   for (auto k = 0; k < m; k++) {
     y[k] += x[k];
   }
