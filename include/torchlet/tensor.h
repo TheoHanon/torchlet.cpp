@@ -38,6 +38,10 @@ public:
   Tensor
   index(const std::initializer_list<torchlet::index::Slice> &index) const;
 
+  template <typename T> inline const T &item() {
+    return reinterpret_cast<T *>(m_storage->data)[m_elem_offset];
+  };
+
   Tensor permute(const std::size_t &idx1, const std::size_t &idx2) const;
   Tensor view(const std::vector<std::size_t> &new_shape) const;
 
