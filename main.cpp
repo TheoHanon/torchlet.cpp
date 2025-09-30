@@ -38,14 +38,14 @@ template <typename T> void rprint(Tensor &tensor, size_t dim, size_t &index) {
       if (k != shape[dim] - 1)
         std::cout << ", ";
     }
-    std::cout << "]";
+    std::cout << "]\n";
   }
 };
 
 template <typename T> void print(Tensor &tensor) {
   size_t index = 0;
   rprint<T>(tensor, 0, index);
-  std::cout << std::endl;
+  std::cout << "\n" << std::endl;
 };
 
 template <typename T> void print_raw(Tensor &tensor) {
@@ -67,22 +67,39 @@ int main() {
   size_t in_features = 10;
   size_t out_features = 5;
 
-  Linear linear(in_features, out_features, false, Dtype::Float32);
-  linear.uniform_(1.0f, 1.0f);
+  // Linear linear(in_features, out_features, false, Dtype::Float32);
+  // linear.uniform_(1.0f, 1.0f);
 
-  Tensor x = Tensor::ones({5, 10}, Dtype::Float32);
+  // Tensor x = Tensor::ones({5, 10}, Dtype::Float32);
 
   // torchlet::init::uniform_(x, 0.0f, 1.0f);
 
-  Tensor out = linear.forward(x);
+  // Tensor out = linear.forward(x);
 
-  print<float>(out);
+  // print<float>(out);
 
-  // vector<size_t> shape{2, 3, 5};
-  // Dtype dtype = Dtype::Float32;
+  vector<size_t> shape{5, 3, 5};
+  Dtype dtype = Dtype::Float32;
 
-  // Tensor t1 = Tensor(shape, dtype);
-  // Tensor t2 = t1.index({Slice(0, 2), Slice(0, 3), Slice(0, 5)});
+  Tensor t1 = Tensor(shape, dtype);
+  Tensor t2 = t1.index({Slice(0), Slice(0), Slice(0, 5)});
+
+  // Tensor t2 = t1.index({Slice(0, 5), Slice(2, 3), Slice(0, 5)});
+  // std::cout << "Offsets : " << t1.elem_offset() << ", " << t2.elem_offset()
+  //           << std::endl;
+
+  // vector<size_t> s1 = t1.strides();
+  vector<size_t> s2 = t2.shape();
+
+  // for (const auto &s : s1) {
+  //   std::cout << s << " ";
+  // }
+  // std::cout << "\n";
+  for (const auto &s : s2) {
+    std::cout << s << " ";
+    ;
+  }
+  std::cout << std::endl;
 
   // print<float>(t1);
   // print<float>(t2);

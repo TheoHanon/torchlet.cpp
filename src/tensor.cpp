@@ -70,7 +70,7 @@ Tensor Tensor::ones(const std::vector<std::size_t> &shape, const Dtype &dtype) {
 Tensor Tensor::index(const std::initializer_list<std::size_t> &index) const {
 
   if (index.size() != m_strides.size()) {
-    throw std::runtime_error("Wrong indices size.");
+    throw std::invalid_argument("Wrong indices size.");
   }
 
   std::size_t new_elem_offset =
@@ -86,37 +86,53 @@ Tensor Tensor::index(
     const std::initializer_list<torchlet::index::Slice> &index) const {
 
   if (index.size() != m_strides.size()) {
-    throw std::runtime_error("Wrong indices size.");
+    throw std::invalid_argument("Wrong indices size.");
   }
 
-  std::vector<std::size_t> new_shape(m_shape.size());
+  std::vector<std::size_t> new_shape, new_strides;
+  new_shape.reserve(m_shape.size());
+  new_strides.reserve(m_strides.size());
+
   std::size_t new_elem_offset = m_elem_offset;
   std::size_t k = 0;
-  for (const auto &idx : index) {
-    new_shape[k++] = idx.range();
-    new_elem_offset += idx.start;
-  }
 
-  std::vector<std::size_t> new_strides(m_strides);
+  for (const auto &idx : index) {
+    if (idx.range() > 1) {
+      new_shape.push_back(idx.range());
+      new_strides.push_back(m_strides[k]);
+    }
+    new_elem_offset += idx.start * m_strides[k++];
+  }
+  new_shape.shrink_to_fit();
+  new_strides.shrink_to_fit();
+
   return Tensor(new_shape, new_strides, new_elem_offset, m_dtype, m_storage,
                 false);
 };
 
 template <typename T> void Tensor::fill_(T val) {
 
-  if (!m_contiguous)
-    throw std::runtime_error("The memory layout must be contiguous.");
-
   if (CPPTypeToDType<T>::dtype != m_dtype) {
     throw std::runtime_error("Type T does not match the type of dtype.");
   }
 
-  std::size_t elem_offset = torchlet::detail::get_offset(
-      {static_cast<std::size_t>(0)}, m_shape, m_strides, m_elem_offset);
-  std::size_t numel = torchlet::detail::numel(m_shape);
+  T *data_ptr = this->data_ptr<T>();
 
-  T *data_ptr = reinterpret_cast<T *>(m_storage->data);
-  std::fill(data_ptr + elem_offset, data_ptr + elem_offset + numel, val);
+  if (m_contiguous) {
+    std::fill(data_ptr + m_elem_offset, data_ptr + m_elem_offset + m_numel,
+              val);
+  } else {
+    for (std::size_t idx = 0; idx < m_numel; idx++) {
+      std::size_t offset = m_elem_offset;
+      std::size_t tmp = idx;
+      for (std::size_t dim = m_shape.size(); dim-- > 0;) {
+        std::size_t coord = tmp % m_shape[dim];
+        tmp /= m_shape[dim];
+        offset += coord * m_strides[dim];
+      }
+      data_ptr[offset] = val;
+    }
+  }
 };
 
 template void Tensor::fill_(float val);
@@ -124,6 +140,8 @@ template void Tensor::fill_(double val);
 template void Tensor::fill_(int32_t val);
 template void Tensor::fill_(int64_t val);
 template void Tensor::fill_(uint8_t val);
+template void Tensor::fill_(uint32_t val);
+template void Tensor::fill_(uint64_t val);
 
 template <typename T>
 void Tensor::assign_(const std::initializer_list<std::size_t> &index, T val) {
@@ -148,6 +166,10 @@ template void Tensor::assign_(const std::initializer_list<std::size_t> &index,
                               int64_t);
 template void Tensor::assign_(const std::initializer_list<std::size_t> &index,
                               uint8_t);
+template void Tensor::assign_(const std::initializer_list<std::size_t> &index,
+                              uint32_t);
+template void Tensor::assign_(const std::initializer_list<std::size_t> &index,
+                              uint64_t);
 
 Tensor Tensor::permute(const std::size_t &idx1, const std::size_t &idx2) const {
 

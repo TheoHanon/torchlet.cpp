@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
 #include <random>
+
+#include "utils/utils.h"
 #include <torchlet/torchlet.h>
 
 template <typename T> class KernelTypedTest : public ::testing::Test {};
 using MyTypes = ::testing::Types<float, double>;
+
 TYPED_TEST_SUITE(KernelTypedTest, MyTypes);
 
 TYPED_TEST(KernelTypedTest, VaddLarge) {
@@ -14,14 +17,7 @@ TYPED_TEST(KernelTypedTest, VaddLarge) {
   std::vector<T> a(m, T{1}), b(m, T{1}), expected(m, T{2});
 
   vadd_kernel(a.data(), b.data(), m);
-
-  for (std::size_t k = 0; k < m; ++k) {
-    if constexpr (std::is_same_v<T, float>) {
-      EXPECT_FLOAT_EQ(b[k], expected[k]) << "k=" << k;
-    } else {
-      EXPECT_DOUBLE_EQ(b[k], expected[k]) << "k=" << k;
-    }
-  }
+  expect_array_equal(b.data(), expected.data(), m);
 };
 
 TYPED_TEST(KernelTypedTest, MvBasic) {
@@ -33,14 +29,7 @@ TYPED_TEST(KernelTypedTest, MvBasic) {
       expected(n, static_cast<T>(m));
 
   gemv_kernel(W.data(), x.data(), y.data(), m, n);
-
-  for (auto k = 0; k < n; k++) {
-    if constexpr (std::is_same_v<T, float>) {
-      EXPECT_FLOAT_EQ(y[k], expected[k]) << "k=" << k;
-    } else {
-      EXPECT_DOUBLE_EQ(y[k], expected[k]) << "k=" << k;
-    }
-  }
+  expect_array_equal(y.data(), expected.data(), n);
 };
 
 TYPED_TEST(KernelTypedTest, MvIdentityRandom) {
@@ -66,25 +55,14 @@ TYPED_TEST(KernelTypedTest, MvIdentityRandom) {
   std::vector<T> expected(x);
 
   gemv_kernel(W.data(), x.data(), y.data(), m, m);
-
-  for (auto k = 0; k < m; k++) {
-    if constexpr (std::is_same_v<T, float>) {
-      EXPECT_FLOAT_EQ(expected[k], y[k]) << "mismatch at k=" << k;
-    } else {
-      EXPECT_DOUBLE_EQ(expected[k], y[k]) << "mismatch at k=" << k;
-    }
-  }
+  expect_array_equal(y.data(), expected.data(), m);
 };
 
 TYPED_TEST(KernelTypedTest, VaddSingleElement) {
   using T = TypeParam;
   T a = T{3}, b = T{4};
   vadd_kernel(&a, &b, 1u);
-  if constexpr (std::is_same_v<T, float>) {
-    EXPECT_FLOAT_EQ(b, 7.0f);
-  } else {
-    EXPECT_DOUBLE_EQ(b, 7.0);
-  }
+  expect_equal(T{7}, b);
 };
 
 TYPED_TEST(KernelTypedTest, VaddWithNegatives) {
@@ -94,12 +72,5 @@ TYPED_TEST(KernelTypedTest, VaddWithNegatives) {
   std::vector<T> expected = {T{1.5}, T{0.0}, T{2.0}};
 
   vadd_kernel(a.data(), b.data(), a.size());
-
-  for (size_t i = 0; i < a.size(); ++i) {
-    if constexpr (std::is_same_v<T, float>) {
-      EXPECT_FLOAT_EQ(expected[i], b[i]) << "mismatch at k=" << i;
-    } else {
-      EXPECT_DOUBLE_EQ(expected[i], b[i]) << "mismatch at k=" << i;
-    }
-  }
+  expect_array_equal(b.data(), expected.data(), a.size());
 };

@@ -13,11 +13,11 @@ void normal_(Tensor &tensor, T mean, T stdev, Generator &gen) {
   std::normal_distribution<T> dist{mean, stdev};
 
   std::size_t elem_offset = tensor.elem_offset();
-  T *data_ptr = tensor.data_ptr<T>() + elem_offset;
+  T *data_ptr = tensor.data_ptr<T>();
 
   if (tensor.is_contiguous()) {
     for (std::size_t idx = 0; idx < tensor.numel(); idx++)
-      data_ptr[idx] = dist(gen.engine());
+      data_ptr[idx + elem_offset] = dist(gen.engine());
   } else {
 
     std::vector<std::size_t> shape = tensor.shape();
@@ -48,11 +48,11 @@ void uniform_(Tensor &tensor, T start, T end, Generator &gen) {
   std::uniform_real_distribution<T> dist{start, end};
 
   std::size_t elem_offset = tensor.elem_offset();
-  T *data_ptr = tensor.data_ptr<T>() + elem_offset;
+  T *data_ptr = tensor.data_ptr<T>();
 
   if (tensor.is_contiguous()) {
     for (std::size_t idx = 0; idx < tensor.numel(); idx++)
-      data_ptr[idx] = dist(gen.engine());
+      data_ptr[idx + elem_offset] = dist(gen.engine());
   } else {
 
     std::vector<std::size_t> shape = tensor.shape();
