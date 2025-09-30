@@ -1,7 +1,8 @@
 add_executable(torchlet_tests 
     kernel_test.cpp
     tensor_test.cpp
-    linear_test.cpp)
+    linear_test.cpp
+    init_test.cpp)
 
 target_link_libraries(
     torchlet_tests PRIVATE gtest_main torchlet

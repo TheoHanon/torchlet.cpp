@@ -6,12 +6,30 @@ Linear::Linear(std::size_t in_features, std::size_t out_features, bool bias,
                const Dtype &dtype)
     : in_features(in_features), out_features(out_features), m_has_bias(bias) {
 
+  if (dtype != Dtype::Float32 && dtype != Dtype::Float64) {
+    throw std::invalid_argument(
+        "Invalid input type. Only support float32 or float64.");
+  }
+  if (in_features <= 0 || out_features <= 0) {
+    throw std::invalid_argument(
+        "in_features and out_features must be positive.");
+  }
+
   std::vector<std::size_t> shape_w{in_features, out_features};
   m_weights = Tensor(shape_w, dtype);
+
+  DISPATCH_FLOAT(dtype, scalar_t, {
+    torchlet::init::uniform_(m_weights, -sqrt(scalar_t{1} / in_features),
+                             sqrt(scalar_t{1} / in_features));
+  });
 
   if (bias) {
     std::vector<std::size_t> shape_b{out_features};
     m_bias = Tensor(shape_b, dtype);
+    DISPATCH_FLOAT(dtype, scalar_t, {
+      torchlet::init::uniform_(m_bias, -sqrt(scalar_t{1} / in_features),
+                               sqrt(scalar_t{1} / in_features));
+    });
   }
 
   return;
@@ -62,7 +80,7 @@ Tensor Linear::forward(const Tensor &x) {
       gemv_kernel(pW, px, py, out_features, in_features);
     })
 
-    if (bias()) {
+    if (has_bias()) {
       DISPATCH_FLOAT(x.dtype(), scalar_t, {
         const scalar_t *pb = m_bias.data_ptr<scalar_t>();
         scalar_t *py = out.data_ptr<scalar_t>() + b * out_features;

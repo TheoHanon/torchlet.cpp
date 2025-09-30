@@ -69,12 +69,12 @@ public:
   inline bool is_contiguous() const noexcept { return m_contiguous; };
 
 private:
-  Dtype m_dtype;
+  Dtype m_dtype = Dtype::Float32;
   std::vector<std::size_t> m_shape;
   std::vector<std::size_t> m_strides;
-  std::size_t m_elem_offset;
-  std::size_t m_numel;
-  std::shared_ptr<Storage> m_storage;
+  std::size_t m_elem_offset = 0;
+  std::size_t m_numel = 0;
+  std::shared_ptr<Storage> m_storage = nullptr;
   bool m_contiguous = true;
 
   Tensor(const std::vector<std::size_t> &shape,
