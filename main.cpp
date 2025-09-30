@@ -63,53 +63,46 @@ template <typename T> void print_raw(Tensor &tensor) {
   std::cout << "]" << std::endl;
 }
 
-int main() {
-  size_t in_features = 10;
-  size_t out_features = 5;
+struct Module {
 
-  // Linear linear(in_features, out_features, false, Dtype::Float32);
-  // linear.uniform_(1.0f, 1.0f);
+  size_t input_dim;
+  size_t output_dim;
+  size_t n_layer;
+  size_t hidden_features;
+  Dtype dtype;
+  std::vector<Linear> modules;
 
-  // Tensor x = Tensor::ones({5, 10}, Dtype::Float32);
+  Module() = delete;
 
-  // torchlet::init::uniform_(x, 0.0f, 1.0f);
+  Module(size_t input_dim, size_t output_dim, size_t n_layer,
+         size_t hidden_features, Dtype dtype)
+      : input_dim(input_dim), output_dim(output_dim), n_layer(n_layer),
+        hidden_features(hidden_features), dtype(dtype) {
 
-  // Tensor out = linear.forward(x);
+    modules.emplace_back(input_dim, hidden_features, false, dtype);
+    for (auto k = 0; k < n_layer - 2; ++k)
+      modules.emplace_back(hidden_features, hidden_features, false, dtype);
 
-  // print<float>(out);
+    modules.emplace_back(hidden_features, output_dim, false, dtype);
+  };
 
-  vector<size_t> shape{5, 3, 5};
-  Dtype dtype = Dtype::Float32;
-
-  Tensor t1 = Tensor(shape, dtype);
-  Tensor t2 = t1.index({Slice(0), Slice(0), Slice(0, 5)});
-
-  // Tensor t2 = t1.index({Slice(0, 5), Slice(2, 3), Slice(0, 5)});
-  // std::cout << "Offsets : " << t1.elem_offset() << ", " << t2.elem_offset()
-  //           << std::endl;
-
-  // vector<size_t> s1 = t1.strides();
-  vector<size_t> s2 = t2.shape();
-
-  // for (const auto &s : s1) {
-  //   std::cout << s << " ";
-  // }
-  // std::cout << "\n";
-  for (const auto &s : s2) {
-    std::cout << s << " ";
-    ;
+  Tensor forward(Tensor &x) {
+    Tensor out = x;
+    for (const auto &mod : modules) {
+      out = mod.forward(out);
+    }
+    return out;
   }
-  std::cout << std::endl;
+};
 
-  // print<float>(t1);
-  // print<float>(t2);
+int main() {
 
-  // torchlet::init::normal_(t2, 0.f, 1.f);
+  Module nn(5, 1, 3, 10, Dtype::Float32);
+  Tensor x({10, 5}, Dtype::Float32);
+  torchlet::init::normal_(x, 0.0f, 1.0f);
 
-  // print<float>(t1);
-  // print<float>(t2);
-
-  // std::cout << "\n\n";
+  Tensor out = nn.forward(x);
+  print<float>(out);
 
   return 0;
 }

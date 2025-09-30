@@ -50,7 +50,7 @@ template void Linear::uniform_(float, float, Generator &);
 template void Linear::uniform_(double, double, Generator &);
 
 // naive implementation
-Tensor Linear::forward(const Tensor &x) {
+Tensor Linear::forward(const Tensor &x) const {
 
   if (!x.is_contiguous())
     throw std::runtime_error("Input must be contiguous.");

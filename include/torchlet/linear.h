@@ -9,7 +9,7 @@ public:
 
   Linear() = delete;
 
-  Tensor forward(const Tensor &x);
+  Tensor forward(const Tensor &x) const;
 
   template <typename T>
   void normal_(T mean, T stdev, Generator &gen = Generator::global());
@@ -23,7 +23,7 @@ public:
     }
     return m_bias;
   };
-  const bool &has_bias() { return m_has_bias; };
+  const bool &has_bias() const { return m_has_bias; };
   Tensor &weights() { return m_weights; };
 
 private:
