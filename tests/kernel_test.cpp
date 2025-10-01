@@ -2,6 +2,7 @@
 #include <random>
 
 #include "utils/utils.h"
+#include <torchlet/ops/kernel.h>
 #include <torchlet/torchlet.h>
 
 template <typename T> class KernelTypedTest : public ::testing::Test {};

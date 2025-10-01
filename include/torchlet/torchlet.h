@@ -1,6 +1,7 @@
 #pragma once
-#include "dtype.h"
-#include "index.h"
-#include "init.h"
-#include "linear.h"
-#include "tensor.h"
+#include <torchlet/core/dtype.h>
+#include <torchlet/core/index.h>
+#include <torchlet/core/tensor.h>
+#include <torchlet/module/linear.h>
+#include <torchlet/ops/functional.h>
+#include <torchlet/ops/init.h>

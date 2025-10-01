@@ -1,7 +1,9 @@
-#include <torchlet/tensor.h>
+#include <torchlet/core/tensor.h>
 
 #include "detail/helpers.h"
 #include "detail/validators.h"
+
+using torchlet::core::Tensor, torchlet::core::Dtype;
 
 Tensor::Tensor(const std::vector<std::size_t> &shape, const Dtype &dtype)
     : m_dtype(dtype), m_shape(shape), m_elem_offset(0) {
@@ -83,7 +85,7 @@ Tensor Tensor::index(const std::initializer_list<std::size_t> &index) const {
 };
 
 Tensor Tensor::index(
-    const std::initializer_list<torchlet::index::Slice> &index) const {
+    const std::initializer_list<torchlet::core::index::Slice> &index) const {
 
   if (index.size() != m_strides.size()) {
     throw std::invalid_argument("Wrong indices size.");

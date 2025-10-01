@@ -5,9 +5,11 @@
 #include <utility>
 #include <vector>
 
-#include "dtype.h"
-#include "index.h"
-#include "rng.h"
+#include <torchlet/core/dtype.h>
+#include <torchlet/core/index.h>
+#include <torchlet/core/rng.h>
+
+namespace torchlet::core {
 
 struct Storage {
   void *data = nullptr;
@@ -36,7 +38,7 @@ public:
 
   Tensor index(const std::initializer_list<std::size_t> &index) const;
   Tensor
-  index(const std::initializer_list<torchlet::index::Slice> &index) const;
+  index(const std::initializer_list<torchlet::core::index::Slice> &index) const;
 
   template <typename T> inline const T &item() {
     return reinterpret_cast<T *>(m_storage->data)[m_elem_offset];
@@ -70,8 +72,8 @@ public:
 
 private:
   Dtype m_dtype = Dtype::Float32;
-  std::vector<std::size_t> m_shape;
-  std::vector<std::size_t> m_strides;
+  std::vector<std::size_t> m_shape{0};
+  std::vector<std::size_t> m_strides{0};
   std::size_t m_elem_offset = 0;
   std::size_t m_numel = 0;
   std::shared_ptr<Storage> m_storage = nullptr;
@@ -82,3 +84,4 @@ private:
          const std::size_t &elem_offset, const Dtype &dtype,
          const std::shared_ptr<Storage> &storage, const bool &contiguous);
 };
+} // namespace torchlet::core

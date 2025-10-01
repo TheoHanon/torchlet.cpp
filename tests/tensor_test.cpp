@@ -4,6 +4,8 @@
 #include "utils/utils.h"
 #include <torchlet/torchlet.h>
 
+using torchlet::core::Tensor, torchlet::core::Generator, torchlet::core::Dtype;
+
 template <typename T> class TensorTypedTest : public ::testing::Test {};
 using MyTypes = ::testing::Types<float, double, int32_t, uint32_t, uint8_t,
                                  uint32_t, uint64_t>;
@@ -67,8 +69,8 @@ TYPED_TEST(TensorTypedTest, SliceIndex) {
   auto dt = CPPTypeToDType<T>::dtype;
 
   Tensor t = Tensor::zeros({3, 4}, dt);
-  Tensor row1 =
-      t.index({torchlet::index::Slice(1), torchlet::index::Slice(0, 4)});
+  Tensor row1 = t.index(
+      {torchlet::core::index::Slice(1), torchlet::core::index::Slice(0, 4)});
 
   EXPECT_EQ(row1.shape(), (std::vector<size_t>{4}));
   EXPECT_EQ(row1.storage_ptr(), t.storage_ptr());
@@ -123,8 +125,8 @@ TYPED_TEST(TensorTypedTest, ElemOffset) {
 
   Tensor t = Tensor::zeros({4, 5}, dt);
 
-  Tensor row2 =
-      t.index({torchlet::index::Slice(2), torchlet::index::Slice(0, 5)});
+  Tensor row2 = t.index(
+      {torchlet::core::index::Slice(2), torchlet::core::index::Slice(0, 5)});
   EXPECT_EQ(row2.storage_ptr(), t.storage_ptr());
   EXPECT_EQ(row2.elem_offset(), 10);
 
@@ -140,9 +142,9 @@ TEST(TensorTest, ContiguityInvariants) {
   Tensor p = t.permute(0, 2);
   EXPECT_FALSE(p.is_contiguous());
 
-  Tensor s =
-      p.index({torchlet::index::Slice(0, 4), torchlet::index::Slice(0, 3),
-               torchlet::index::Slice(0, 2)});
+  Tensor s = p.index({torchlet::core::index::Slice(0, 4),
+                      torchlet::core::index::Slice(0, 3),
+                      torchlet::core::index::Slice(0, 2)});
   EXPECT_FALSE(s.is_contiguous());
 }
 

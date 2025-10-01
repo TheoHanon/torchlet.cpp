@@ -7,7 +7,9 @@
 #include <vector>
 
 using namespace std;
-using namespace torchlet::index;
+using namespace torchlet::core::index;
+using torchlet::core::Tensor, torchlet::core::Dtype, torchlet::module::Linear,
+    torchlet::core::Generator;
 
 template <typename T> void rprint(Tensor &tensor, size_t dim, size_t &index) {
   std::vector<size_t> shape = tensor.shape();
@@ -90,6 +92,7 @@ struct Module {
     Tensor out = x;
     for (const auto &mod : modules) {
       out = mod.forward(out);
+      out = torchlet::ops::gelu(out);
     }
     return out;
   }
@@ -97,9 +100,10 @@ struct Module {
 
 int main() {
 
+  Generator::global().manual_seed(42);
   Module nn(5, 1, 3, 10, Dtype::Float32);
   Tensor x({10, 5}, Dtype::Float32);
-  torchlet::init::normal_(x, 0.0f, 1.0f);
+  torchlet::ops::init::normal_(x, 0.0f, 1.0f);
 
   Tensor out = nn.forward(x);
   print<float>(out);

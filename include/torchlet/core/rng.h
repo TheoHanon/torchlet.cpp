@@ -1,6 +1,7 @@
 #pragma once
 #include <random>
 
+namespace torchlet::core {
 class Generator {
 
 public:
@@ -29,3 +30,4 @@ private:
   Generator &operator=(const Generator &) = delete;
   Generator &operator=(Generator &&) = delete;
 };
+} // namespace torchlet::core

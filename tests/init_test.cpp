@@ -3,6 +3,8 @@
 
 #include "utils/utils.h"
 
+using torchlet::core::Tensor, torchlet::core::Generator;
+
 template <typename T> class InitTypedTest : public ::testing::Test {};
 using MyTypes = ::testing::Types<float, double>;
 TYPED_TEST_SUITE(InitTypedTest, MyTypes);
@@ -19,11 +21,11 @@ TYPED_TEST(InitTypedTest, Reproducable) {
   Tensor t({len}, dt);
   Tensor v({len}, dt);
 
-  torchlet::init::normal_(t, T{0}, T{1}, g1);
-  torchlet::init::normal_(v, T{0}, T{1}, g2);
+  torchlet::ops::init::normal_(t, T{0}, T{1}, g1);
+  torchlet::ops::init::normal_(v, T{0}, T{1}, g2);
   expect_array_equal(t.data_ptr<T>(), v.data_ptr<T>(), len);
 
-  torchlet::init::uniform_(t, T{0}, T{1}, g1);
-  torchlet::init::uniform_(v, T{0}, T{1}, g2);
+  torchlet::ops::init::uniform_(t, T{0}, T{1}, g1);
+  torchlet::ops::init::uniform_(v, T{0}, T{1}, g2);
   expect_array_equal(t.data_ptr<T>(), v.data_ptr<T>(), len);
 };

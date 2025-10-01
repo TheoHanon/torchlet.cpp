@@ -1,5 +1,5 @@
 #include <cassert>
-#include <torchlet/kernel.h>
+#include <torchlet/ops/kernel.h>
 
 template <typename T>
 void gemv_kernel(const T *W, const T *x, T *y, std::size_t m,

@@ -2,6 +2,8 @@
 #include <gtest/gtest.h>
 #include <torchlet/torchlet.h>
 
+using torchlet::core::Tensor, torchlet::module::Linear, torchlet::core::Dtype;
+
 template <typename T> class LinearTypedTest : public ::testing::Test {};
 using MyTypes = ::testing::Types<float, double>;
 TYPED_TEST_SUITE(LinearTypedTest, MyTypes);
@@ -49,7 +51,7 @@ TYPED_TEST(LinearTypedTest, ForwardOnesBias) {
 
   Tensor x = Tensor::ones({in}, dt);
   lin.uniform_(T{1}, T{1}); // work around to set to one.
-  torchlet::init::uniform_(lin.bias(), T{1}, T{1});
+  torchlet::ops::init::uniform_(lin.bias(), T{1}, T{1});
 
   Tensor z = lin.forward(x);
   expect_array_equal(z.data_ptr<T>(), std::vector<T>(out, T{in + 1}).data(),
@@ -97,8 +99,8 @@ TYPED_TEST(LinearTypedTest, ForwardBatch2DOneBias) {
 
   Linear lin(in, out, true, dt);
 
-  lin.uniform_<T>(T{1}, T{1});                      // W = ones
-  torchlet::init::uniform_(lin.bias(), T{1}, T{1}); // need to change
+  lin.uniform_<T>(T{1}, T{1});                           // W = ones
+  torchlet::ops::init::uniform_(lin.bias(), T{1}, T{1}); // need to change
 
   // x shape [B, in]: rows = [1..in], [2..2*in step 2], [3..3*in step 3]
   Tensor x = Tensor::zeros({B, in}, dt);
@@ -171,7 +173,7 @@ TYPED_TEST(LinearTypedTest, ForwardBatch3DOnesBias) {
   Linear lin(in, out, true, dt);
 
   lin.uniform_<T>(T{1}, T{1});
-  torchlet::init::uniform_(lin.bias(), T{2}, T{2});
+  torchlet::ops::init::uniform_(lin.bias(), T{2}, T{2});
 
   Tensor x = Tensor::zeros({B1, B2, in}, dt);
 

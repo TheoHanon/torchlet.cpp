@@ -1,10 +1,12 @@
-#include <torchlet/init.h>
+#include <torchlet/ops/init.h>
 
 // TODO : Remove hard coded loops -> implement iterator.
-namespace torchlet::init {
+
+using torchlet::core::Tensor, torchlet::core::Generator;
 
 template <typename T>
-void normal_(Tensor &tensor, T mean, T stdev, Generator &gen) {
+void torchlet::ops::init::normal_(Tensor &tensor, T mean, T stdev,
+                                  Generator &gen) {
 
   if (CPPTypeToDType<T>::dtype != tensor.dtype()) {
     throw std::runtime_error("Type T does not match the type of dtype.");
@@ -39,7 +41,8 @@ void normal_(Tensor &tensor, T mean, T stdev, Generator &gen) {
 };
 
 template <typename T>
-void uniform_(Tensor &tensor, T start, T end, Generator &gen) {
+void torchlet::ops::init::uniform_(Tensor &tensor, T start, T end,
+                                   Generator &gen) {
 
   if (CPPTypeToDType<T>::dtype != tensor.dtype()) {
     throw std::runtime_error("Type T does not match the type of dtype.");
@@ -71,10 +74,11 @@ void uniform_(Tensor &tensor, T start, T end, Generator &gen) {
   }
 };
 
-template void normal_(Tensor &, float, float, Generator &);
-template void normal_(Tensor &, double, double, Generator &);
+template void torchlet::ops::init::normal_(Tensor &, float, float, Generator &);
+template void torchlet::ops::init::normal_(Tensor &, double, double,
+                                           Generator &);
 
-template void uniform_(Tensor &, float, float, Generator &);
-template void uniform_(Tensor &, double, double, Generator &);
-
-} // namespace torchlet::init
+template void torchlet::ops::init::uniform_(Tensor &, float, float,
+                                            Generator &);
+template void torchlet::ops::init::uniform_(Tensor &, double, double,
+                                            Generator &);

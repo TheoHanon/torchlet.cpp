@@ -1,25 +1,25 @@
 #pragma once
 #include <iostream>
-#include <torchlet/dtype.h>
+#include <torchlet/core/dtype.h>
 #include <vector>
 
 namespace torchlet::detail {
 
-inline constexpr std::size_t dtype_size(Dtype dtype) noexcept {
+inline constexpr std::size_t dtype_size(torchlet::core::Dtype dtype) noexcept {
   switch (dtype) {
-  case Dtype::Float32:
+  case torchlet::core::Dtype::Float32:
     return 4;
-  case Dtype::Float64:
+  case torchlet::core::Dtype::Float64:
     return 8;
-  case Dtype::Int32:
+  case torchlet::core::Dtype::Int32:
     return 4;
-  case Dtype::Int64:
+  case torchlet::core::Dtype::Int64:
     return 8;
-  case Dtype::UInt8:
+  case torchlet::core::Dtype::UInt8:
     return 1;
-  case Dtype::UInt32:
+  case torchlet::core::Dtype::UInt32:
     return 4;
-  case Dtype::UInt64:
+  case torchlet::core::Dtype::UInt64:
     return 8;
   }
   return 0;
@@ -65,7 +65,8 @@ inline std::size_t numel(const std::vector<std::size_t> &shape) noexcept {
   return numel;
 };
 
-inline std::size_t nbytes(const std::vector<std::size_t> &shape, Dtype dtype) {
+inline std::size_t nbytes(const std::vector<std::size_t> &shape,
+                          torchlet::core::Dtype dtype) {
   return dtype_size(dtype) * numel(shape);
 };
 

@@ -26,7 +26,8 @@ add_library(torchlet
 src/tensor.cpp 
 src/init.cpp
 src/kernel.cpp 
-src/linear.cpp)
+src/linear.cpp
+src/functional.cpp)
 
 
 target_include_directories(torchlet 
