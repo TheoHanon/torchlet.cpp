@@ -6,12 +6,13 @@
 /// @tparam T type
 /// @param W m x n matrix
 /// @param x n input vector
+/// @param b m bias vector
 /// @param y m output vector
 /// @param m rowsize
 /// @param n colsize
 template <typename T>
-void gemv_kernel(const T *W, const T *x, T *y, std::size_t m,
-                 std::size_t n) noexcept;
+void mvb_kernel(const T *W, const T *x, const T *b, T *y, std::size_t m,
+                std::size_t n) noexcept;
 
 /// @brief Vector addition
 /// @tparam T type
@@ -20,3 +21,12 @@ void gemv_kernel(const T *W, const T *x, T *y, std::size_t m,
 /// @param m vector size
 template <typename T>
 void vadd_kernel(const T *x, T *y, std::size_t m) noexcept;
+
+template <typename T>
+void gelu_kernel(const T *x, T *y, std::size_t m) noexcept;
+
+template <typename T>
+void softmax_kernel(const T *x, T *y, std::size_t m) noexcept;
+
+template <typename T>
+void log_softmax_kernel(const T *x, T *y, std::size_t m) noexcept;

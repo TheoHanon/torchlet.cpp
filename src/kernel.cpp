@@ -1,16 +1,18 @@
 #include <cassert>
+#include <cmath>
 #include <torchlet/ops/kernel.h>
 
 template <typename T>
-void gemv_kernel(const T *W, const T *x, T *y, std::size_t m,
-                 std::size_t n) noexcept {
+void mvb_kernel(const T *W, const T *x, const T *b, T *y, std::size_t m,
+                std::size_t n) noexcept {
+
   for (auto k = 0; k < m; k++) {
-    T tmp(0);
+    T acc = b ? b[k] : T{0};
     const T *wrow = W + k * n;
     for (auto i = 0; i < n; i++) {
-      tmp += wrow[i] * x[i];
+      acc += wrow[i] * x[i];
     }
-    y[k] = tmp;
+    y[k] = acc;
   }
 }
 
@@ -21,10 +23,98 @@ void vadd_kernel(const T *x, T *y, std::size_t m) noexcept {
   }
 };
 
-template void gemv_kernel(const float *W, const float *x, float *y,
-                          std::size_t m, std::size_t n);
-template void gemv_kernel(const double *W, const double *x, double *y,
-                          std::size_t m, std::size_t n);
+template <typename T>
+void gelu_kernel(const T *x, T *y, std::size_t m) noexcept {
+
+  constexpr T half = T{0.5};
+  constexpr T coeff = T{0.044715};
+  constexpr T sqrt_2_over_pi = T{0.7978845608028654};
+
+  for (auto k = 0; k < m; k++) {
+    const T vx = x[k];
+    const T x3 = vx * vx * vx;
+    const T arg = std::fma(coeff, x3, vx);
+    const T t = std::tanh(sqrt_2_over_pi * arg);
+    y[k] = half * vx * (T{1} + t);
+  };
+};
+
+template <typename T>
+void softmax_kernel(const T *x, T *y, std::size_t m) noexcept {
+  T max = static_cast<T>(std::numeric_limits<T>::lowest());
+
+  for (std::size_t k = 0; k < m; ++k) {
+    const T xv = x[k];
+    max = (xv > max) ? xv : max;
+  }
+
+  T sum = T{0};
+  for (std::size_t k = 0; k < m; ++k) {
+    const T xv = x[k] - max;
+    const T ev = std::exp(xv);
+    y[k] = ev;
+    sum += ev;
+  }
+
+  if (sum == T{0}) {
+    const T val = T{1} / static_cast<T>(m);
+    for (std::size_t k = 0; k < m; ++k)
+      y[k] = val;
+    return;
+  }
+
+  const T inv_sum = T{1} / sum;
+  for (std::size_t k = 0; k < m; ++k) {
+    y[k] *= inv_sum;
+  }
+};
+
+template <typename T>
+void log_softmax_kernel(const T *x, T *y, std::size_t m) noexcept {
+  T max = static_cast<T>(std::numeric_limits<T>::lowest());
+
+  for (std::size_t k = 0; k < m; ++k) {
+    const T xv = x[k];
+    max = (xv > max) ? xv : max;
+  }
+  if (max == -std::numeric_limits<T>::infinity()) {
+    for (std::size_t k = 0; k < m; ++k)
+      y[k] = -std::numeric_limits<T>::infinity();
+    return;
+  }
+
+  T sum = T{0};
+  for (std::size_t k = 0; k < m; ++k) {
+    const T xv = x[k] - max;
+    y[k] = xv;
+    sum += std::exp(xv);
+  }
+
+  if (sum == T{0}) {
+    for (std::size_t k = 0; k < m; ++k)
+      y[k] = -std::numeric_limits<T>::infinity();
+    return;
+  }
+
+  T logsum = std::log(sum);
+  for (std::size_t k = 0; k < m; ++k) {
+    y[k] = y[k] - logsum;
+  }
+};
+
+template void mvb_kernel(const float *W, const float *x, const float *b,
+                         float *y, std::size_t m, std::size_t n);
+template void mvb_kernel(const double *W, const double *x, const double *b,
+                         double *y, std::size_t m, std::size_t n);
 
 template void vadd_kernel(const float *x, float *y, std::size_t m);
 template void vadd_kernel(const double *x, double *y, std::size_t m);
+
+template void gelu_kernel(const float *x, float *y, std::size_t m);
+template void gelu_kernel(const double *x, double *y, std::size_t m);
+
+template void softmax_kernel(const float *x, float *y, std::size_t m);
+template void softmax_kernel(const double *x, double *y, std::size_t m);
+
+template void log_softmax_kernel(const float *x, float *y, std::size_t m);
+template void log_softmax_kernel(const double *x, double *y, std::size_t m);

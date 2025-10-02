@@ -1,76 +1,106 @@
-#include <cmath>
+#include "detail/validators.h"
+#include <torchlet/iterator/iterator.h>
 #include <torchlet/ops/functional.h>
 #include <torchlet/ops/kernel.h>
 
-using torchlet::core::Tensor;
+using torchlet::core::Tensor, torchlet::iterator::ContiguousIterator;
 
 Tensor torchlet::ops::linear(const Tensor &x, const Tensor &weights,
                              const Tensor &bias) {
 
-  if (!x.is_contiguous())
-    throw std::runtime_error("Input must be contiguous.");
-  if (x.dtype() != weights.dtype())
-    throw std::runtime_error("Input must have the same type as weight matrix.");
-  if (x.shape().back() != weights.shape().back())
-    throw std::runtime_error("Dimension doesn't match");
+  torchlet::detail::check_contiguous(x, "x");
+  torchlet::detail::check_contiguous(weights, "weights");
+  torchlet::detail::check_same_dtype(x, weights, "x", "weights");
+  torchlet::detail::check_rank_ge(x, 1, "x");
+  torchlet::detail::check_rank(weights, 2, "weights");
 
-  std::vector<std::size_t> x_shape = x.shape(), w_shape = weights.shape();
-  std::size_t in_features = x_shape.back(), out_features = w_shape.front();
+  const auto &xs = x.shape();
+  const auto &ws = weights.shape();
+  const size_t inF = xs.back();
+  const size_t outF = ws.front();
+  bool has_bias = false;
 
-  std::vector<std::size_t> new_shape(x_shape);
-  new_shape.back() = out_features;
-  Tensor out(new_shape, x.dtype());
+  torchlet::detail::check_dim_eq(weights, 1, inF, "weights", "in_features");
 
-  std::size_t batch_numel{1};
-
-  for (std::size_t k = 0; k < x_shape.size() - 1; k++)
-    batch_numel *= x_shape[k];
-
-  for (std::size_t b = 0; b < batch_numel; b++) {
-
-    DISPATCH_FLOAT(x.dtype(), scalar_t, {
-      const scalar_t *pW = weights.data_ptr<scalar_t>();
-      const scalar_t *px = x.data_ptr<scalar_t>() + b * in_features;
-      scalar_t *py = out.data_ptr<scalar_t>() + b * out_features;
-      gemv_kernel(pW, px, py, out_features, in_features);
-    })
-
-    if (bias.storage_ptr() != nullptr) {
-      DISPATCH_FLOAT(x.dtype(), scalar_t, {
-        const scalar_t *pb = bias.data_ptr<scalar_t>();
-        scalar_t *py = out.data_ptr<scalar_t>() + b * out_features;
-        vadd_kernel(pb, py, out_features);
-      })
-    }
+  if (torchlet::detail::has_data(bias)) {
+    has_bias = true;
+    torchlet::detail::check_contiguous(bias, "bias");
+    torchlet::detail::check_same_dtype(bias, x, "bias", "x");
+    torchlet::detail::check_rank(bias, 1, "bias");
+    torchlet::detail::check_dim_eq(bias, 0, outF, "bias", "length");
   }
+
+  auto out_shape = xs;
+  out_shape.back() = outF;
+  Tensor out(out_shape, x.dtype());
+
+  ContiguousIterator it(&out, {&x});
+
+  DISPATCH_FLOAT(x.dtype(), scalar_t, {
+    const scalar_t *pW = weights.data_ptr<scalar_t>();
+    const scalar_t *pb = has_bias ? bias.data_ptr<scalar_t>() : nullptr;
+
+    it.for_each_with_inputs([&](uint8_t *optr, const uint8_t **iptrs, size_t) {
+      const scalar_t *px = reinterpret_cast<const scalar_t *>(iptrs[0]);
+      scalar_t *py = reinterpret_cast<scalar_t *>(optr);
+      mvb_kernel(pW, px, pb, py, outF, inF);
+    });
+  })
 
   return out;
 };
 
 Tensor torchlet::ops::gelu(const Tensor &x) {
-  if (!x.is_contiguous())
-    throw std::runtime_error("GELU: non-contiguous not implemented.");
+
+  torchlet::detail::check_contiguous(x, "x");
+  torchlet::detail::check_rank_ge(x, 1, "x");
 
   Tensor out(x.shape(), x.dtype());
+  ContiguousIterator it(&out, {&x});
+  std::size_t nfeat = it.input_dim;
 
   DISPATCH_FLOAT(x.dtype(), scalar_t, {
-    const scalar_t *px = x.data_ptr<scalar_t>();
-    scalar_t *po = out.data_ptr<scalar_t>();
-    const std::size_t N = x.numel();
-
-    constexpr scalar_t half = scalar_t{0.5};
-    constexpr scalar_t coeff = scalar_t{0.044715};
-    const scalar_t sqrt_2_pi =
-        std::sqrt(scalar_t{0.63661977236758134308}); // sqrt(2/pi)
-
-    for (auto k = 0; k < x.numel(); ++k) {
-      scalar_t val = px[k];
-      scalar_t x3 = val * val * val;
-
-      po[k] = half * val *
-              (scalar_t{1} + std::tanh(sqrt_2_pi * std::fma(coeff, x3, val)));
-    }
+    it.for_each_with_inputs([&](uint8_t *optr, const uint8_t **iptrs, size_t) {
+      const scalar_t *px = reinterpret_cast<const scalar_t *>(iptrs[0]);
+      scalar_t *py = reinterpret_cast<scalar_t *>(optr);
+      gelu_kernel(px, py, nfeat);
+    });
   })
+  return out;
+};
 
+Tensor torchlet::ops::softmax(const Tensor &x) {
+  torchlet::detail::check_contiguous(x, "x");
+  torchlet::detail::check_rank_ge(x, 1, "x");
+
+  Tensor out(x.shape(), x.dtype());
+  ContiguousIterator it(&out, {&x});
+  std::size_t nfeat = it.input_dim;
+
+  DISPATCH_FLOAT(x.dtype(), scalar_t, {
+    it.for_each_with_inputs([&](uint8_t *optr, const uint8_t **iptrs, size_t) {
+      const scalar_t *px = reinterpret_cast<const scalar_t *>(iptrs[0]);
+      scalar_t *py = reinterpret_cast<scalar_t *>(optr);
+      softmax_kernel(px, py, nfeat);
+    });
+  })
+  return out;
+};
+
+Tensor torchlet::ops::log_softmax(const Tensor &x) {
+  torchlet::detail::check_contiguous(x, "x");
+  torchlet::detail::check_rank_ge(x, 1, "x");
+
+  Tensor out(x.shape(), x.dtype());
+  ContiguousIterator it(&out, {&x});
+  std::size_t nfeat = it.input_dim;
+
+  DISPATCH_FLOAT(x.dtype(), scalar_t, {
+    it.for_each_with_inputs([&](uint8_t *optr, const uint8_t **iptrs, size_t) {
+      const scalar_t *px = reinterpret_cast<const scalar_t *>(iptrs[0]);
+      scalar_t *py = reinterpret_cast<scalar_t *>(optr);
+      log_softmax_kernel(px, py, nfeat);
+    });
+  })
   return out;
 };

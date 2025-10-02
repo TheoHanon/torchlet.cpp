@@ -90,10 +90,13 @@ struct Module {
 
   Tensor forward(Tensor &x) {
     Tensor out = x;
-    for (const auto &mod : modules) {
+    for (auto k = 0; k < n_layer - 1; ++k) {
+      auto mod = modules[k];
       out = mod.forward(out);
       out = torchlet::ops::gelu(out);
     }
+    out = modules.back().forward(out);
+    out = torchlet::ops::softmax(out);
     return out;
   }
 };
@@ -101,8 +104,8 @@ struct Module {
 int main() {
 
   Generator::global().manual_seed(42);
-  Module nn(5, 1, 3, 10, Dtype::Float32);
-  Tensor x({10, 5}, Dtype::Float32);
+  Module nn(5, 10, 3, 10, Dtype::Float32);
+  Tensor x({5}, Dtype::Float32);
   torchlet::ops::init::normal_(x, 0.0f, 1.0f);
 
   Tensor out = nn.forward(x);

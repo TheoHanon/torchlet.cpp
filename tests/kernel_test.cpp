@@ -29,7 +29,9 @@ TYPED_TEST(KernelTypedTest, MvBasic) {
   std::vector<T> W(m * n, T{1.0}), x(m, T{1.0}), y(n, T{0.0}),
       expected(n, static_cast<T>(m));
 
-  gemv_kernel(W.data(), x.data(), y.data(), m, n);
+  const T *bias = static_cast<const T *>(nullptr);
+
+  mvb_kernel(W.data(), x.data(), bias, y.data(), m, n);
   expect_array_equal(y.data(), expected.data(), n);
 };
 
@@ -54,8 +56,9 @@ TYPED_TEST(KernelTypedTest, MvIdentityRandom) {
     }
   }
   std::vector<T> expected(x);
+  const T *bias = static_cast<const T *>(nullptr);
 
-  gemv_kernel(W.data(), x.data(), y.data(), m, m);
+  mvb_kernel(W.data(), x.data(), bias, y.data(), m, m);
   expect_array_equal(y.data(), expected.data(), m);
 };
 

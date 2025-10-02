@@ -17,7 +17,7 @@ TYPED_TEST(LinearTypedTest, ConstructWithCorrectShapes) {
   Linear lin(in, out, false, dt);
 
   Tensor x({in}, dt);
-  lin.uniform_(T{0}, T{1});
+  torchlet::ops::init::uniform_(lin.weights(), T{0}, T{1});
 
   Tensor y = lin.forward(x);
 
@@ -35,7 +35,8 @@ TYPED_TEST(LinearTypedTest, ForwardOnesNoBias) {
   EXPECT_THROW(lin.bias(), std::runtime_error);
 
   Tensor x = Tensor::ones({in}, dt);
-  lin.uniform_(T{1}, T{1}); // work around to set to one.
+  torchlet::ops::init::uniform_(lin.weights(), T{1},
+                                T{1}); // work around to set to one.
 
   Tensor z = lin.forward(x);
   expect_array_equal(z.data_ptr<T>(), std::vector<T>(out, T{in}).data(), out);
@@ -50,7 +51,8 @@ TYPED_TEST(LinearTypedTest, ForwardOnesBias) {
   Linear lin(in, out, true, dt);
 
   Tensor x = Tensor::ones({in}, dt);
-  lin.uniform_(T{1}, T{1}); // work around to set to one.
+  torchlet::ops::init::uniform_(lin.weights(), T{1},
+                                T{1}); // work around to set to one.
   torchlet::ops::init::uniform_(lin.bias(), T{1}, T{1});
 
   Tensor z = lin.forward(x);
@@ -65,7 +67,7 @@ TYPED_TEST(LinearTypedTest, ForwardBatch2DOneNoBias) {
 
   Linear lin(in, out, false, dt);
 
-  lin.uniform_<T>(T{1}, T{1}); // W = ones
+  torchlet::ops::init::uniform_(lin.weights(), T{1}, T{1}); // W = ones
 
   // x shape [B, in]: rows = [1..in], [2..2*in step 2], [3..3*in step 3]
   Tensor x = Tensor::zeros({B, in}, dt);
@@ -99,8 +101,8 @@ TYPED_TEST(LinearTypedTest, ForwardBatch2DOneBias) {
 
   Linear lin(in, out, true, dt);
 
-  lin.uniform_<T>(T{1}, T{1});                           // W = ones
-  torchlet::ops::init::uniform_(lin.bias(), T{1}, T{1}); // need to change
+  torchlet::ops::init::uniform_(lin.weights(), T{1}, T{1}); // W = ones
+  torchlet::ops::init::uniform_(lin.bias(), T{1}, T{1});    // need to change
 
   // x shape [B, in]: rows = [1..in], [2..2*in step 2], [3..3*in step 3]
   Tensor x = Tensor::zeros({B, in}, dt);
@@ -134,7 +136,7 @@ TYPED_TEST(LinearTypedTest, ForwardBatch3DOnesNoBias) {
 
   Linear lin(in, out, false, dt);
 
-  lin.uniform_<T>(T{1}, T{1});
+  torchlet::ops::init::uniform_(lin.weights(), T{1}, T{1});
 
   Tensor x = Tensor::zeros({B1, B2, in}, dt);
 
@@ -172,7 +174,7 @@ TYPED_TEST(LinearTypedTest, ForwardBatch3DOnesBias) {
 
   Linear lin(in, out, true, dt);
 
-  lin.uniform_<T>(T{1}, T{1});
+  torchlet::ops::init::uniform_(lin.weights(), T{1}, T{1});
   torchlet::ops::init::uniform_(lin.bias(), T{2}, T{2});
 
   Tensor x = Tensor::zeros({B1, B2, in}, dt);
@@ -224,7 +226,7 @@ TEST(LinearTest, ForwardDimMismatch) {
   Linear lin(5, 3, false, dt);
 
   Tensor x = Tensor::zeros({7}, dt);
-  lin.uniform_<float>(0.0, 0.0);
+  torchlet::ops::init::uniform_(lin.weights(), 0.0f, 0.0f);
 
   EXPECT_THROW(lin.forward(x), std::runtime_error);
 };
@@ -236,7 +238,7 @@ TEST(LinearTest, ForwardNonContiguous) {
   Tensor base = Tensor::ones({2, 3}, dt);
   Tensor x = base.permute(0, 1);
 
-  lin.uniform_<float>(0.0, 0.0);
+  torchlet::ops::init::uniform_(lin.weights(), 0.0f, 0.0f);
 
   EXPECT_THROW(lin.forward(x), std::runtime_error);
 };

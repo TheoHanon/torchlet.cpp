@@ -14,16 +14,6 @@ public:
 
   torchlet::core::Tensor forward(const torchlet::core::Tensor &x) const;
 
-  template <typename T>
-  void
-  normal_(T mean, T stdev,
-          torchlet::core::Generator &gen = torchlet::core::Generator::global());
-
-  template <typename T>
-  void uniform_(
-      T start, T end,
-      torchlet::core::Generator &gen = torchlet::core::Generator::global());
-
   torchlet::core::Tensor &bias() {
     if (m_bias.storage_ptr() == nullptr) {
       throw std::runtime_error("The bias torchlet::core::Tensor is empty.");

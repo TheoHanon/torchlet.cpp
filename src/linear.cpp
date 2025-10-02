@@ -42,20 +42,6 @@ Linear::Linear(std::size_t in_features, std::size_t out_features, bool bias,
   return;
 };
 
-template <typename T> void Linear::normal_(T mean, T stdev, Generator &gen) {
-  torchlet::ops::init::normal_(m_weights, mean, stdev, gen);
-};
-
-template <typename T> void Linear::uniform_(T start, T end, Generator &gen) {
-  torchlet::ops::init::uniform_(m_weights, start, end, gen);
-};
-
-template void Linear::normal_(float, float, Generator &);
-template void Linear::normal_(double, double, Generator &);
-
-template void Linear::uniform_(float, float, Generator &);
-template void Linear::uniform_(double, double, Generator &);
-
 // naive implementation
 Tensor Linear::forward(const Tensor &x) const {
   return torchlet::ops::linear(x, m_weights, m_bias);
