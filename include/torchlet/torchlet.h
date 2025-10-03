@@ -5,3 +5,4 @@
 #include <torchlet/module/linear.h>
 #include <torchlet/ops/functional.h>
 #include <torchlet/ops/init.h>
+#include <torchlet/ops/kernel.h>

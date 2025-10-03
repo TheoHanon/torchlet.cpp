@@ -1,6 +1,24 @@
+#include <Accelerate/Accelerate.h>
 #include <cassert>
 #include <cmath>
 #include <torchlet/ops/kernel.h>
+
+template <typename T>
+void mm_kernel(const T *A, const T *B, T *C, std::size_t m, std::size_t n,
+               std::size_t k) {
+
+  T acc;
+  for (std::size_t i = 0; i < m; ++i) {
+    const T *Ai = A + i * k;
+    for (std::size_t j = 0; j < n; ++j) {
+      acc = T{0};
+      for (std::size_t l = 0; l < k; ++l) {
+        acc = std::fma(Ai[l], B[n * l + j], acc);
+      }
+      C[i * n + j] = acc;
+    }
+  }
+};
 
 template <typename T>
 void mvb_kernel(const T *W, const T *x, const T *b, T *y, std::size_t m,
@@ -15,6 +33,22 @@ void mvb_kernel(const T *W, const T *x, const T *b, T *y, std::size_t m,
     y[k] = acc;
   }
 }
+
+void mvb_blas_kernel(const float *__restrict W, const float *__restrict x,
+                     const float *__restrict b, float *__restrict y,
+                     std::size_t m, std::size_t n) noexcept {
+
+  float alpha = 1.0f, beta = 0.0f;
+  const int incx = 1, incy = 1;
+
+  if (b) {
+    beta = 1.0f;
+    std::memcpy(y, b, m * sizeof(float));
+  }
+
+  cblas_sgemv(CblasRowMajor, CblasNoTrans, m, n, alpha, W, n, x, incx, beta, y,
+              incy);
+};
 
 template <typename T>
 void vadd_kernel(const T *x, T *y, std::size_t m) noexcept {
@@ -101,6 +135,11 @@ void log_softmax_kernel(const T *x, T *y, std::size_t m) noexcept {
     y[k] = y[k] - logsum;
   }
 };
+
+template void mm_kernel(const float *A, const float *B, float *C, std::size_t m,
+                        std::size_t n, std::size_t k);
+template void mm_kernel(const double *A, const double *B, double *C,
+                        std::size_t m, std::size_t n, std::size_t k);
 
 template void mvb_kernel(const float *W, const float *x, const float *b,
                          float *y, std::size_t m, std::size_t n);

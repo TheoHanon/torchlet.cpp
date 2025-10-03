@@ -5,6 +5,27 @@
 
 using torchlet::core::Tensor, torchlet::iterator::ContiguousIterator;
 
+// Tensor scaled_dot_product_attention(const Tensor &Q, const Tensor &K,
+//                                     const Tensor &V) {
+
+//   auto k_shape = K.shape(), q_shape = Q.shape();
+//   auto qv_shape = q_shape;
+//   qv_shape.back() = k_shape.at(k_shape.size() - 2);
+
+//   Tensor qv(qv_shape, Q.dtype());
+//   ContiguousIterator it = ContiguousIterator(&qv, {&Q, &K});
+//   std::size_t m =
+
+//   DISPATCH_FLOAT(Q.dtype(), scalar_t, {
+//     it.for_each_with_inputs(
+//         [&](uint8_t *optr, const uint8_t **iptrs, size_t n_in) {
+//           const scalar_t *qp = reinterpret_cast<const scalar_t *>(iptrs[0]);
+//           const scalar_t *kp = reinterpret_cast<const scalar_t *>(iptrs[1]);
+//           scalar_t *qkp = reinterpret_cast<scalar_t *>(optr);
+//         });
+//   })
+// };
+
 Tensor torchlet::ops::linear(const Tensor &x, const Tensor &weights,
                              const Tensor &bias) {
 
